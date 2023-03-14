@@ -35,20 +35,40 @@ on ? cal especificar adequadament.
 
 **3.  Filtra els gens poc expressats (rpkm) de tal manera que els gens que quedaran han de tenir una expressió superior o igual a 1 en almenys el 50% de les mostres. Actualitzat els counts filtrats amb log rpkm que serà la transformació que es mantindrà a partir d'ara.**
 
+
+
 **4.  Anotar els gens especificant els "genes symbol", el cromosoma i l'EntrezID a partir de la base de dades Mus.musculus de bioconductor. Has trobat gens duplicats? Recorda d'assignar els gens al slot adient del objecte DGEList.**
+
+
 
 **5.  Visualitza la distribució de l'expressió dels gens en les 12 mostres. Comenta els resultats obtinguts.**
 
+
+
 **6.  Representa en dimensió reduïda (MDS) les mostres. Comenta els resultats obtinguts.**
+
+
 
 **7.  Estem interessats en totes les comparacions 2 a 2. Defineix la matriu de disseny i els contrastos.**
 
+
+
 **8.  Ajusta el model lineal aplicant les transformacions necessàries.**
+
+
 
 **9.  Obté la taula d'expressió diferencial de cada contrast. Mostrant els top 10 gens d'acord amb el p-valor ajustat.**
 
+
+
 **10. Representa els volcano plots dels contrastos corresponents al grup control contra els trasplantaments a 2 i 24 hores. Remarcant els top 10 gens en cadascun d'aquests contrastos.**
+
+
 
 **11. Representa un heatmap amb el gens diferencialment expressats en el contrast entre grup control i els trasplantats a 2 hores.**
 
+
+
 **12. Fes un anàlisi d'enriquiment del contrast entre grup control i els trasplantats a 2 hores de manera similar a la pràctica fet a classe. Recorda d'usar el EntrezID com referència per fer l'enriquiment.**
+
+
