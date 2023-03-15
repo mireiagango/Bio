@@ -73,6 +73,21 @@ x<- DGEList(counts=mydata[, 2:13 ], group=rep(1:4,each=3))
 
 ```
 
+```{r}
+class(x)
+```
+```{r}
+dim(x)
+```
+```{r}
+names(x)
+```
+```{r}
+str(x)
+
+```
+
+
 on ? cal especificar adequadament.
 
 **3. Filtra els gens poc expressats (rpkm) de tal manera que els gens
@@ -232,5 +247,6 @@ Recorda d'usar el EntrezID com referència per fer l'enriquiment.**
 ```{r}
 
 ```
+
 
 
