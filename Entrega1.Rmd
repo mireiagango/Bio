@@ -48,18 +48,13 @@ library(i, character.only = TRUE, quietly = TRUE)
 material analitzat, ...). Explica el disseny experimental (factors,
 condició experimental, número rèpliques, pool/no pool, ...).**
 
-introdució rna.seq ORGANISME: MUS MUSCULUS M.BIOLOGIC: mRNA
-L'objectiu és buscar gens que s'expressen (expresio) diferencial entre condicions
+ORGANISME: MUS MUSCULUS; M.BIOLOGIC: mRNA
 
+L'objectiu és buscar gens amb expresió diferencial entre condicions.
 La pregunta biológica que es vol contestar del musculus és teixit, ha agafat tres tipus de poblacions celulars (teixits)
 
-n=9 ; n1+n1+n3=n =3+3+3 (molt poques r\`pliques (les minimes) equilibrat
-p=#gens genoma ratoli matriu de dades= estadistica-\> n x p ; omiques-\>
-p x n (pq p\>\>n)
+Les dades es componen per 12 mostres analitzades, 4 com a control, 4 amb dades que s han pres 2 hores després de l'intervenció i unes últimes 4 amb informació 24 hores després (a més d'una primera variable identificadora, per tant treballarem amb un factor a tres nivells amb 4 rèpliques (i per tant equilibrat).
 
-S analitza fent grups de tres (un dia s'analitzen tres un altre dia tres
-i un altre tres, aixi que s'ha de tenir en compte l efecte batch, per
-aixó es posa una mostra per condició)
 
 **2. Importa els counts normalitzats del fitxer
 GSE116583_transplant.am.htseq.all.rpkm.txt i crea un objecte DGlist,
@@ -70,13 +65,11 @@ l'experiment.**
 mydata<-read.delim2("GSE116583_transplant.am.htseq.all.rpkm.txt",
 header=T, sep="\t" ,dec=".") 
 x<- DGEList(counts=mydata[, 2:13 ], group=rep(1:3,each=4))
-
+rownames(x) <- mydata[,1]
 ```
 ```{r}
 group<-x$samples$group
 ```
-
-
 ```{r}
 class(x)
 ```
@@ -91,8 +84,6 @@ str(x)
 
 ```
 
-
-on ? cal especificar adequadament.
 
 **3. Filtra els gens poc expressats (rpkm) de tal manera que els gens
 que quedaran han de tenir una expressió superior o igual a 1 en almenys
@@ -128,21 +119,26 @@ del objecte DGEList.**
 
 ```{r}
 geneid <- rownames(x)
-genes <- select(Mus.musculus, keys = geneid,
-columns = c("SYMBOL", "TXCHROM"),
-keytype = "ENTREZID")
+genes <- select(Mus.musculus, keys = rownames(x), 
+                columns = c("SYMBOL", "TXCHROM","ENTREZID"), 
+                keytype = "ENSEMBL")
 
 ```
 
 ```{r}
-dim(genes)
+#Nombre d'obserbacions i variables abans d'eliminar duplicats
+genes1<-genes
+dim(genes1)
 ```
 
 ```{r}
+#Nombre d'obserbacions i variables després
 genes <- genes[!duplicated(genes$ENTREZID), ]
 dim(genes)
+
 ```
-Observem que hi ha 2 observacions menys, per tant hi havia dos repetits
+
+Observem que les dimensions són diferents abans i després d' eliminar els repetits, per tant si que hi havia duplicats.
 
 
 **5. Visualitza la distribució de l'expressió dels gens en les 12
@@ -160,7 +156,7 @@ plotDensities(lcpm, legend = FALSE, main = "After filtering")
 abline(v = 0, lty = 3)
 
 ```
-
+Les distribucións semblen ser bastant semblants a primera vista, cap destaca, peró sique s'observa com la densitat disminueix a mesura que l'intensitat creix després d'arribar al seu màxim quan l'intensitat es troba prop de 4.
 
 **6. Representa en dimensió reduïda (MDS) les mostres. Comenta els
 resultats obtinguts.**
@@ -193,18 +189,12 @@ plotMDS(lcpm, labels = group, col = col.group,
 main = "group")
 
 ```
+Es pot observar fàcilment en aquest gràfic que hi ha similituds dins del grup però diferències notables entre aquests a la vegada, sent així fàcil distingr-los. 
+
 
 ```{r}
 plotMDS(lcpm, labels = lane, col = col.lane, dim = c(3, 4),
 main = "lane")
-
-```
-
-De manera alternativa:
-```{r}
-## Interactive MDS plot
-glMDSPlot(lcpm, labels = paste(group, lane, sep = "_"),
-groups = x$samples[, c(2, 5)], launch = TRUE)
 
 ```
 
@@ -214,23 +204,16 @@ matriu de disseny i els contrastos.**
 
 ```{r}
 # Construct linear model ---------------------------------------------
-design <- model.matrix(~0 + group + lane)
+design <- model.matrix(~0 + group)
 colnames(design) <- gsub("group", "", colnames(design))
-contr.matrix <- makeContrasts(BasalvsLP = Basal - LP,
-BasalvsML = Basal - ML,
-LPvsML = LP - ML,
+contr.matrix <- makeContrasts(diavsdosH = dia - dosH,
+diavsNaive = dia - Naive_cont,
+NaivevsdosH = Naive_cont - dosH,
 levels = colnames(design))
+
 v <- voom(x, design, plot=TRUE)
 ```
 
-
-```{r}
-vfit <- lmFit(v, design)
-vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
-efit <- eBayes(vfit)
-plotSA(efit)
-
-```
 
 **8. Ajusta el model lineal aplicant les transformacions necessàries.**
 
@@ -268,8 +251,11 @@ head(dt)
 ```
 
 ```{r}
-de.common <- which(dt[, 1] != 0 & dt[, 2] != 0)
-length(de.common)
+#Top 10 gens d'acord amb el p-valor ajustat
+topTreat(tfit, coef = 1, n = 10) #diavsdosH
+topTreat(tfit, coef = 2, n = 10) #diavsNaive
+topTreat(tfit, coef = 3, n = 10) #NaivevsdosH
+topcontrvsdos <-topTreat(tfit, coef = 3, n = Inf) 
 
 ```
 
@@ -280,6 +266,10 @@ gens en cadascun d'aquests contrastos.**
 
 ```{r}
 volcanoplot(tfit, coef = 2, style = "p-value", highlight = 10, names = tfit$genes$SYMBOL, hl.col="blue")
+```
+
+```{r}
+volcanoplot(tfit, coef = 3, style = "p-value", highlight = 10, names = tfit$genes$SYMBOL, hl.col="blue")
 ```
 
 **11. Representa un heatmap amb el gens diferencialment expressats en el
@@ -298,24 +288,16 @@ Recorda d'usar el EntrezID com referència per fer l'enriquiment.**
 
 ```{r}
 load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
-idx <- ids2indices(Mm.c2,id=rownames(v))
-cam.BasalvsLP <- camera(v,idx,design,contrast=contr.matrix[,1])
-head(cam.BasalvsLP,5)
+idx <- ids2indices(Mm.c2,id=v$genes$ENTREZID)
 
-cam.BasalvsML <- camera(v,idx,design,contrast=contr.matrix[,2])
-head(cam.BasalvsML,5)
-
-cam.BasalvsML <- camera(v,idx,design,contrast=contr.matrix[,3])
-head(cam.BasalvsML,5)
-
-barcodeplot(efit$t[,3], index=idx$LIM_MAMMARY_LUMINAL_MATURE_DN,
-main="LPvsML")
+cam.contvsdos <- camera(v,idx,design,contrast=contr.matrix[,3])
+head(cam.contvsdos,5)
 
 barcodeplot(efit$t[,3], index=idx$LIM_MAMMARY_LUMINAL_MATURE_UP,
-main="LPvsML")
+main="NAIVEvs2")
+
+barcodeplot(efit$t[,3], index=idx$LIM_MAMMARY_LUMINAL_MATURE_DN,
+main="NAIVEvs2")
 
 ```
-
-
-
 
