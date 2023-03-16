@@ -1,0 +1,11 @@
+path_in <-"D:/3er SEGON SEMESTRE/Biociencies/Tasca avaluativa 1"
+path_out <- "D:/3er SEGON SEMESTRE/Biociencies/Tasca avaluativa 1/Resultado"
+file <- "GSE116583_transplant.am.htseq.all.rpkm.txt"
+setwd(path_in)
+if(!dir.exists(path_out)) dir.create(path_out)
+fn <-file.path(path_out, paste0(strsplit(file,"\\.")[[1]][1], 
+                                "_", Sys.Date()))
+#Process                                     
+rmarkdown::render("Informe_dinamic.Rmd", params = list(path_in=path_in, path_out=path_out, 
+                  file = file), output_format =  c("pdf_document"),
+                  output_file = paste0(fn, output_format ='.pdf'), encoding = "UTF8")
