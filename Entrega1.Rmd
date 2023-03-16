@@ -48,10 +48,10 @@ library(i, character.only = TRUE, quietly = TRUE)
 material analitzat, ...). Explica el disseny experimental (factors,
 condició experimental, número rèpliques, pool/no pool, ...).**
 
-introdució rna.seq ORGANISME: MUS MUSCULUS M.BIOLOGIC: mRNA OBJECTIU=
-Buscar gens que s'expressen (expresio) diferencial entre condicions
+introdució rna.seq ORGANISME: MUS MUSCULUS M.BIOLOGIC: mRNA
+L'objectiu és buscar gens que s'expressen (expresio) diferencial entre condicions
 
-Del musculus ha agafat les poblacions celulars (teixits) (tres tipus)
+La pregunta biológica que es vol contestar del musculus és teixit, ha agafat tres tipus de poblacions celulars (teixits)
 
 n=9 ; n1+n1+n3=n =3+3+3 (molt poques r\`pliques (les minimes) equilibrat
 p=#gens genoma ratoli matriu de dades= estadistica-\> n x p ; omiques-\>
@@ -69,9 +69,13 @@ l'experiment.**
 ```{r}
 mydata<-read.delim2("GSE116583_transplant.am.htseq.all.rpkm.txt",
 header=T, sep="\t" ,dec=".") 
-x<- DGEList(counts=mydata[, 2:13 ], group=rep(1:4,each=3))
+x<- DGEList(counts=mydata[, 2:13 ], group=rep(1:3,each=4))
 
 ```
+```{r}
+group<-x$samples$group
+```
+
 
 ```{r}
 class(x)
@@ -102,13 +106,20 @@ lcpm <- cpm(x, log = TRUE)
 ```
 
 ```{r}
-# Only keep genes which have cpm greater than 1 in at least 3 samples.
-keep.exprs <- rowSums(cpm > 1) >= 3
+# Only keep genes that fit the criteria
+keep.exprs <- rowSums(cpm >= 1) >= 6 
+#6=50% de 12 que és el nombre de mostres
 x <- x[keep.exprs, , keep.lib.sizes = FALSE]
 dim(x)
 
 ```
 
+```{r}
+#RPKM atualitzats
+cpm <- cpm(x)
+lcpm <- cpm(x, log = TRUE)
+
+```
 
 **4. Anotar els gens especificant els "genes symbol", el cromosoma i
 l'EntrezID a partir de la base de dades Mus.musculus de bioconductor.
@@ -116,8 +127,22 @@ Has trobat gens duplicats? Recorda d'assignar els gens al slot adient
 del objecte DGEList.**
 
 ```{r}
+geneid <- rownames(x)
+genes <- select(Mus.musculus, keys = geneid,
+columns = c("SYMBOL", "TXCHROM"),
+keytype = "ENTREZID")
 
 ```
+
+```{r}
+dim(genes)
+```
+
+```{r}
+genes <- genes[!duplicated(genes$ENTREZID), ]
+dim(genes)
+```
+Observem que hi ha 2 observacions menys, per tant hi havia dos repetits
 
 
 **5. Visualitza la distribució de l'expressió dels gens en les 12
@@ -145,8 +170,6 @@ resultats obtinguts.**
 library("RColorBrewer")
 samplenames <- substring(colnames(x), 12, nchar(colnames(x)))
 samplenames
-
-group<-c(1,1,1,2,2,2,3,3,3,4,4,4)
 colnames(x) <- samplenames
 x$samples$group <- group
 lane <- as.factor(rep(c("L004", "L006", "L008"), c(4, 4, 4)))
@@ -190,12 +213,32 @@ groups = x$samples[, c(2, 5)], launch = TRUE)
 matriu de disseny i els contrastos.**
 
 ```{r}
+# Construct linear model ---------------------------------------------
+design <- model.matrix(~0 + group + lane)
+colnames(design) <- gsub("group", "", colnames(design))
+contr.matrix <- makeContrasts(BasalvsLP = Basal - LP,
+BasalvsML = Basal - ML,
+LPvsML = LP - ML,
+levels = colnames(design))
+v <- voom(x, design, plot=TRUE)
+```
+
+
+```{r}
+vfit <- lmFit(v, design)
+vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
+efit <- eBayes(vfit)
+plotSA(efit)
 
 ```
 
 **8. Ajusta el model lineal aplicant les transformacions necessàries.**
 
 ```{r}
+vfit <- lmFit(v, design)
+vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
+efit <- eBayes(vfit)
+plotSA(efit)
 
 ```
 
@@ -254,6 +297,22 @@ trasplantats a 2 hores de manera similar a la pràctica fet a classe.
 Recorda d'usar el EntrezID com referència per fer l'enriquiment.**
 
 ```{r}
+load(url("http://bioinf.wehi.edu.au/software/MSigDB/mouse_c2_v5p1.rdata"))
+idx <- ids2indices(Mm.c2,id=rownames(v))
+cam.BasalvsLP <- camera(v,idx,design,contrast=contr.matrix[,1])
+head(cam.BasalvsLP,5)
+
+cam.BasalvsML <- camera(v,idx,design,contrast=contr.matrix[,2])
+head(cam.BasalvsML,5)
+
+cam.BasalvsML <- camera(v,idx,design,contrast=contr.matrix[,3])
+head(cam.BasalvsML,5)
+
+barcodeplot(efit$t[,3], index=idx$LIM_MAMMARY_LUMINAL_MATURE_DN,
+main="LPvsML")
+
+barcodeplot(efit$t[,3], index=idx$LIM_MAMMARY_LUMINAL_MATURE_UP,
+main="LPvsML")
 
 ```
 
