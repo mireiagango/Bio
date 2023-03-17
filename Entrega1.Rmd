@@ -2,9 +2,11 @@
 title: "Bio"
 author: "Mireia Gangonells"
 date: "2023-03-13"
-output: html_document
-editor_options: 
-  markdown: 
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  markdown:
     wrap: 72
 ---
 
@@ -204,11 +206,12 @@ matriu de disseny i els contrastos.**
 
 ```{r}
 # Construct linear model ---------------------------------------------
+group<-as.factor(rep(c("Con","Dues","Dia"),c(4,4,4)))
 design <- model.matrix(~0 + group)
 colnames(design) <- gsub("group", "", colnames(design))
-contr.matrix <- makeContrasts(diavsdosH = dia - dosH,
-diavsNaive = dia - Naive_cont,
-NaivevsdosH = Naive_cont - dosH,
+contr.matrix <- makeContrasts(dia_Dues = Dia - Dues,
+Dia_Con = Dia - Con,
+Con_Dues = Con - Dues,
 levels = colnames(design))
 
 v <- voom(x, design, plot=TRUE)

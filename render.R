@@ -1,5 +1,5 @@
-path_in <-"D:/3er SEGON SEMESTRE/Biociencies/Tasca avaluativa 1"
-path_out <- "D:/3er SEGON SEMESTRE/Biociencies/Tasca avaluativa 1/Resultado"
+path_in <-"C:\Users\User\Desktop\Git\Bio\Entrega1"
+path_out <- "C:\Users\User\Desktop\Git\Bio\RNAAnalysis_Gangonells"
 file <- "GSE116583_transplant.am.htseq.all.rpkm.txt"
 setwd(path_in)
 if(!dir.exists(path_out)) dir.create(path_out)
