@@ -1,4 +1,4 @@
-path_in <-"C:\Users\User\Desktop\Git\Bio\Entrega1"
+path_in <-"C:\Users\User\Desktop\Git\Bio\RNAReport"
 path_out <- "C:\Users\User\Desktop\Git\Bio\RNAAnalysis_Gangonells"
 file <- "GSE116583_transplant.am.htseq.all.rpkm.txt"
 setwd(path_in)
